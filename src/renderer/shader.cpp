@@ -40,7 +40,7 @@ Shader::Shader(const char *filepath, ShaderType type)
     glCompileShader(this->ID);
 
     int success;
-    char info[512];
+    char info[1024];
     glGetShaderiv(this->ID, GL_COMPILE_STATUS, &success);
 
     if (!success)

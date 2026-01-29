@@ -1,5 +1,8 @@
 add_library(renderer
     program.cpp
+    vbo.cpp
+    vao.cpp
+    ebo.cpp
     shader.cpp
 )
 

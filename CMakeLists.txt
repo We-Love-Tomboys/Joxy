@@ -21,6 +21,7 @@ add_subdirectory(thirdparty/glfw)
 add_library(glad thirdparty/glad/src/glad.c)
 target_include_directories(glad PUBLIC thirdparty/glad/include)
 
+
 add_subdirectory(thirdparty/imgui)
 
 
@@ -31,17 +32,18 @@ add_subdirectory(src)
 add_executable(joxy src/main.cpp)
 
 target_link_libraries(joxy
-    PRIVATE
-        glad
-        OpenGL::GL
-        renderer
-        imgui
-        ui
-    PUBLIC
-        glfw
+PRIVATE
+glad
+OpenGL::GL
+renderer
+imgui
+ui
+PUBLIC
+glfw
 )
 
 target_include_directories(joxy PUBLIC include)
+target_include_directories(joxy PUBLIC thirdparty/stb)
 
 
 # Copy shaders next to exe
@@ -50,4 +52,12 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/shaders
         $<TARGET_FILE_DIR:joxy>/shaders
+)
+
+# Copy assets next to the exe
+add_custom_command(
+    TARGET joxy POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:joxy>/assets
 )
