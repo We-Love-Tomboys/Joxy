@@ -14,6 +14,15 @@
 #define WIDTH 800
 #define HEIGHT 600
 
+void processInput(GLFWwindow *window);
+
+glm::vec3 cameraPosition(0.f, 0.f, 3.f);
+glm::vec3 cameraFront(0.f, 0.f, -1.f);
+glm::vec3 cameraUp(0.f, 1.f, 0.f);
+
+float dt = 0.f;
+float lastFrame = 0.f;
+
 int main(int argc, char const *argv[])
 {
     stbi_set_flip_vertically_on_load(true);
@@ -85,7 +94,7 @@ int main(int argc, char const *argv[])
     //     0.5f, 1.0f  // top-center corner
     // };
     // EBO ebo(indices, sizeof(indices));
-    
+
     float vertices[] = {
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
         0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
@@ -122,8 +131,7 @@ int main(int argc, char const *argv[])
         0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
         0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
         -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
-    };
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f};
 
     VAO vao = VAO();
     VBO vbo(vertices, sizeof(vertices));
@@ -147,8 +155,8 @@ int main(int argc, char const *argv[])
 
     joxy::ui::init(window);
 
-    glm::mat4 model(1.f);
-    glm::mat4 view(1.f);
+    glm::mat4 model;
+    glm::mat4 view;
     glm::mat4 projection;
 
     glm::vec3 position(0.f);
@@ -157,24 +165,35 @@ int main(int argc, char const *argv[])
 
     float fov = 60.f;
 
-    model = glm::rotate(model, glm::radians(-55.f), glm::vec3(1.f, 0.f, 0.f));
-    view = glm::translate(view, glm::vec3(0.f, 0.f, -3.f));
+    glm::vec3 camera(0.f, 0.f, 3.f);
+    glm::vec3 target(0.f, 0.f, 0.f);
+    glm::vec3 camDirection = glm::normalize(camera - target);
+    glm::vec3 up(0.f, 1.f, 0.f);
+    glm::vec3 camRight = glm::normalize(glm::cross(up, camDirection));
+    glm::vec3 cameraUp = glm::cross(camDirection, camRight);
 
     glEnable(GL_DEPTH_TEST);
-
     while (!glfwWindowShouldClose(window))
     {
+        processInput(window);
         glfwPollEvents();
         joxy::ui::begin_frame();
         ImGui::SliderFloat("FOV", &fov, 35.f, 100.f);
         projection = glm::perspective(glm::radians(fov), ((float)WIDTH / (float)HEIGHT), 1.f, 100.f);
         ImGui::DragFloat3("Position", &position.x, 0.1f);
         ImGui::DragFloat3("Rotation", &rotation.x, 0.1f, 0, 360);
-        model = glm::mat4(1.0f);
+
+        model = glm::mat4(1.f);
+        model = glm::rotate(model, glm::radians(rotation.x), {1, 0, 0});
+        model = glm::rotate(model, glm::radians(rotation.y), {0, 1, 0});
+        model = glm::rotate(model, glm::radians(rotation.z), {0, 0, 1});
         model = glm::translate(model, position);
-        model = glm::rotate(model, glm::radians(rotation.x), {1,0,0});
-        model = glm::rotate(model, glm::radians(rotation.y), {0,1,0});
-        model = glm::rotate(model, glm::radians(rotation.z), {0,0,1});
+
+        view = glm::lookAt(
+            cameraPosition,
+            cameraPosition + cameraFront,
+            cameraUp);
+
         glClearColor(bg.r, bg.g, bg.b, bg.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -186,8 +205,9 @@ int main(int argc, char const *argv[])
         shaderProgram.setMat4("projection", projection);
         vao.bind();
 
-        // glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, (void *)0);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, (void *)0);
 
         joxy::ui::end_frame();
         glfwSwapBuffers(window);
@@ -195,4 +215,30 @@ int main(int argc, char const *argv[])
     joxy::ui::shutdown();
     glfwTerminate();
     return 0;
+}
+
+void processInput(GLFWwindow *window)
+{
+
+    float currentFrame = glfwGetTime();
+    dt = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+    const float cameraSpeed = 2.5f * dt;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        cameraPosition += cameraSpeed * cameraFront;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        cameraPosition -= cameraSpeed * cameraFront;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
 }
