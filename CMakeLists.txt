@@ -24,8 +24,6 @@ target_include_directories(glad PUBLIC thirdparty/glad/include)
 
 add_subdirectory(thirdparty/imgui)
 
-
-# Your code
 add_subdirectory(src)
 
 # Executable
@@ -45,6 +43,10 @@ glfw
 target_include_directories(joxy PUBLIC include)
 target_include_directories(joxy PUBLIC thirdparty/stb)
 
+
+add_subdirectory(thirdparty/glm)
+target_include_directories(joxy PUBLIC thirdparty/glm)
+target_link_libraries(joxy PUBLIC glm::glm)
 
 # Copy shaders next to exe
 add_custom_command(
